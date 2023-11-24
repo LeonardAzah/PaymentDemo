@@ -3,7 +3,9 @@ const Transfer = require("../models/Transfer");
 const Flutterwave = require("flutterwave-node-v3");
 const StatusCodes = require("http-status-codes");
 const CustomError = require("../errors");
+
 const { paginate } = require("../utils");
+const mongoose = require("mongoose");
 
 const flw = new Flutterwave(
   process.env.FLW_PUBLIC_KEY,
@@ -18,11 +20,16 @@ const initTrans = async (req, res) => {
   delete payload.user;
 
   const response = await flw.Transfer.initiate(payload);
+  // if (response.status == "error") {
+  //   throw new CustomError.BadRequestError("Transaction failed");
+  // }
 
   const transfer = new Transfer({
     ...payload,
     user: sender,
+    // status: response.data.status,
   });
+
   await transfer.save();
   res.status(StatusCodes.CREATED).json({
     response,
@@ -70,9 +77,8 @@ getUserTransferHistory = async (req, res) => {
 };
 
 const getATransfer = async (req, res) => {
-  const id = req.params;
-  const transfer = await Transfer.findOne({ _id: req.params });
-  console.log(transfer);
+  const id = new mongoose.Types.ObjectId(req.params);
+  const transfer = await Transfer.findOne({ _id: id });
 
   if (!transfer) {
     throw new CustomError.NotFoundError("Transfer not found");
