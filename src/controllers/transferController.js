@@ -20,14 +20,14 @@ const initTrans = async (req, res) => {
   delete payload.user;
 
   const response = await flw.Transfer.initiate(payload);
-  // if (response.status == "error") {
-  //   throw new CustomError.BadRequestError("Transaction failed");
-  // }
+  if (response.status === "error") {
+    throw new CustomError.BadRequestError("Transaction failed");
+  }
 
   const transfer = new Transfer({
     ...payload,
     user: sender,
-    // status: response.data.status,
+    status: response.data.status,
   });
 
   await transfer.save();
